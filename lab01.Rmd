@@ -5,10 +5,14 @@ date: "25 de outubro de 2017"
 output: html_document
 ---
 
+Análise exploratória dos gastos dos deputados da verba disponibilizada pela CEAP (cota para o exercício de atividade parlamentar). Os dados são dos anos de 2014 ao 2017. 
+
 ```{r, echo=FALSE, eval=FALSE}
 library(dplyr)
+library(gamlss)
 library(ggplot2)
 library(plotly)
+library(magrittr)
 library(RColorBrewer)
 ceap <- read.csv(file="dadosCEAP.csv", header=TRUE, sep=",") %>% filter(sgPartido != "NA")
 ```
@@ -17,9 +21,11 @@ ceap <- read.csv(file="dadosCEAP.csv", header=TRUE, sep=",") %>% filter(sgPartid
 
 ### 1.1 Quais partidos mais fazem uso do CEAP?
 
-```{r, echo=TRUE}
+Ao plotar o gráfico de barras, podemos perceber que os 3 partidos que mais fazem uso da cota são o PT, PMDB e o PSDB, representando 13.48%, 11.74% e 10.22% dos usos, respectivamente. Em contrapartida, os partidos que menos fazem uso desse recurso, são o PTdoB(0.005%), PMN(0.006%) e PRTB(0.02%).
+
+```{r, echo=TRUE, eval=FALSE}
 partidosQueMaisUsamCEAP <- group_by(ceap, sgPartido) %>% filter(sgPartido != "NA") %>%
-    summarize(totalUsos = n() / nrow(ceap) * 100)
+   summarize(totalUsos = n() / nrow(ceap) * 100)
 
 partidosQueMaisUsamCEAP <- partidosQueMaisUsamCEAP[order(partidosQueMaisUsamCEAP$totalUsos), ]
 
@@ -36,9 +42,10 @@ partidosQueMaisUsamCEAP %>% plot_ly(x=~reorder(sgPartido, totalUsos),
 
 ```
 
-### 1.2 Quais os partidos que mais gastam verba do CEAP?
+### 1.2 Quais partidos gastaram mais em reais usando a CEAP?
+Os três maiores gastos são do PMDB(R$ 72.977.077,78), PT(R$ 69.451.237,72) e o PSDB(R$ 53.862.519,45). Já os que gastaram menos foram o PTdoB(R$ 15.596,45), o PMN(R$ 88.527,78) e o PRTB(R$ 167.443,00).
 
-``` {r, echo=TRUE}
+``` {r, echo=TRUE, eval = FALSE}
 valorGastoReaisPorPartido <- group_by(ceap, sgPartido) %>%
                         summarise(totalReais = sum(valorDocumento))
 
@@ -56,8 +63,8 @@ valorGastoReaisPorPartido %>% plot_ly(x=~reorder(sgPartido, totalReais),
 ```
 
 ### 2.1 Quais os tipos de despesa mais comuns no uso da CEAP?
-
-``` {r, echo=TRUE}
+Os tipos de despesa mais comuns são Emissão de Bilhetes Aéreos, Combustíveis e Lubrificantes e Telefonia. Enquanto que os menos frequentes são Locação ou Fretamento de Embarcações, Locação ou Fretamento de Aeronaves e Assinaturas de Publicações.
+``` {r, echo=TRUE, eval = FALSE}
 tiposDeDespesaMaisComuns <- group_by(ceap, tipoDespesa) %>%
                             summarise(total = n())
 
@@ -89,12 +96,12 @@ tiposDeDespesaMaisComuns %>% plot_ly(x=~tipoDespesa,
                                             yaxis = list(showgrid = FALSE),
                                             showlegend = FALSE)
 
-tiposDeDespesaMaisComuns
 ```
 
 ### 2.2 Quais os tipos de despesa mais comuns no uso da CEAP considerando os valores em R$?
+Os tipos de despesa que geraram um valor em reais mais alto foram Divulgação da Atividade Parlamentar, Emissão de Bilhetes Aéreos e Locação ou Fretamento de Veículos Automotivos. Já os tipos que obtiveram menor contribuição na despesa total foram Locação ou Fretamento de Embarcações, Passagens Terrestres, Marítimas ou Fluviais e Participação em Curso, Palestra ou Evento Similar. 
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, eval = FALSE}
 tiposDeDespesaMaisComunsReais <- group_by(ceap, tipoDespesa) %>%
                                 summarise(totalReais = sum(valorDocumento))
 
@@ -103,26 +110,41 @@ tiposDeDespesaMaisComunsReais <- group_by(ceap, tipoDespesa) %>%
 
 ### 3.1 Quais os estados que mais fazem uso da CEAP?
 
-```{r, echo=TRUE}
+Os estados em que o uso é mais recorrente são: SP, MG E RJ. E os de menos recorrência são: DF, AP e AM.
+
+```{r, echo=TRUE, eval = FALSE}
 estadosMaisUsamCEAP <- group_by(ceap, sgUF) %>%
                         summarise(total = n())
 ```
 
 ### 3.2 Quais os estados que mais fazem uso da CEAP considerando os valores em R$?
 
-```{r, echo=TRUE}
+Considerando o valor em reais, os estados que mais gastam são: SP(R$ 73.480.404), MG(R$ 59.377.119) e RJ(R$ 47.915.897). Os que menos gastam são: DF(R$ 7.153.706), MT(R$ 9.338.002) e AM(R$ 9.414.184).
+
+```{r, echo=TRUE, eval = FALSE}
 estadosMaisUsamCEAPreais <- group_by(ceap, sgUF) %>%
                             summarise(totalReais = sum(valorDocumento))
 ```
 
 ### 4 Quais os parlamentares que mais gastam com o CEAP?
 
-```{r, echo=TRUE}
+Os parlamentares que mais gastaram com o CEAP foram: Francisco Chapadinha(R$ 1.966.293), Macedo(R$ 1.663.062) e Edio Lopes(R$ 1.661.244). Os que menos gastaram foram: Camilo Cola(R$ 0,62), Eliseu Padilha(R$ 5,31) e Marcio Monteiro(R$ 14,18).
+
+```{r, echo=TRUE, eval = FALSE}
 parlamentaresMaisUsamCEAP <- group_by(ceap, nomeParlamentar) %>%
                               filter(valorDocumento > -1) %>%
                               summarise(totalUsos = sum(valorDocumento))
 ```
 
-### Há correlação entre a quantidade de gastos no exterior e o valor restituído da CEAP?
+###5 Há correlação entre a quantidade de gastos no exterior e o valor restituído da CEAP?
+
+Sim, aparentemente o valor restituido é maior para gastos no exterior.
+
+```{r, echo=TRUE, eval=FALSE}
+tipoDocumentoEValorDoc <- group_by(ceap, tipoDocumento) %>%
+                          summarize(totalReais = sum(valorDocumento))
+
+ceap %>% plot_ly(x=~tipoDocumento, y=~valorDocumento, type="scatter", mode="markers")
+```
 
 
