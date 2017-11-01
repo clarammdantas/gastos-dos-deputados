@@ -1,0 +1,113 @@
+---
+title: 'Análise de Gastos de Deputados: Nossas Perguntas'
+author: "Maria Clara Moraes"
+date: "25 de outubro de 2017"
+output: html_document
+---
+
+```{r, echo=FALSE, eval=FALSE}
+library(dplyr)
+library(ggplot2)
+library(plotly)
+ceap <- read.csv(file="dadosCEAP.csv", header=TRUE, sep=",") %>% filter(sgPartido != "NA")
+```
+
+<br>
+
+### 1.1 Quais partidos mais fazem uso do CEAP?
+
+```{r, echo=TRUE}
+partidosQueMaisUsamCEAP <- group_by(ceap, sgPartido) %>% filter(sgPartido != "NA") %>%
+    summarize(totalUsos = n() / nrow(ceap) * 100)
+
+partidosQueMaisUsamCEAP <- partidosQueMaisUsamCEAP[order(partidosQueMaisUsamCEAP$totalUsos), ]
+
+partidosQueMaisUsamCEAP %>% plot_ly(x=~reorder(sgPartido, totalUsos),
+                                    y=~totalUsos,
+                                    type="bar",
+                                    color = partidosQueMaisUsamCEAP$sgPartido) %>%
+  
+                                   layout(title="Gastos", 
+                                   xaxis = list(title="Partido"),
+                                   yaxis = list(title="Num de cota", ticksuffix="%",
+                                                range = c(0, 14),
+                                                tickformat=".2f"))
+
+partidosQueMaisUsamCEAP
+```
+
+### 1.2 Quais os partidos que mais gastam verba do CEAP?
+
+``` {r, echo=TRUE}
+valorGastoReaisPorPartido <- group_by(ceap, sgPartido) %>%
+                        summarise(totalReais = sum(valorDocumento))
+
+valorGastoReaisPorPartido <- valorGastoReaisPorPartido[order(valorGastoReaisPorPartido$totalReais), ]
+
+valorGastoReaisPorPartido %>% plot_ly(x=~reorder(sgPartido, totalReais),
+                                      y=~totalReais,
+                                      type="bar",
+                                      color = valorGastoReaisPorPartido$sgPartido) %>%
+  
+                                      layout(title="Gastos em Reais",
+                                             xaxis = list(title="Partido"),
+                                             yaxis = list(title="Valor em reais",
+                                                          ticksuffix="R$"))
+```
+
+### 2.1 Quais os tipos de despesa mais comuns no uso da CEAP?
+
+``` {r, echo=TRUE}
+tiposDeDespesaMaisComuns <- group_by(ceap, tipoDespesa) %>%
+                            summarise(total = n())
+
+tiposDeDespesaMaisComuns %>% plot_ly(x=~tipoDespesa,
+                                     y=~total,
+                                     type="scatter",
+                                     mode = "markers",
+                                     color = ~tipoDespesa,
+                                     colors = "Reds",
+                                     marker = list(size = ~total / 1000, opacity = 0.5,
+                                                   sizeref = 0.1)) %>%
+              
+                                     layout(title="Gastor por tipo de despesa",
+                                            xaxis = list(showgrid = FALSE, ticklen = 2),
+                                            yaxis = list(showgrid = FALSE, ticklen = 2))
+
+tiposDeDespesaMaisComuns
+```
+
+### 2.2 Quais os tipos de despesa mais comuns no uso da CEAP considerando os valores em R$?
+
+```{r, echo=TRUE}
+tiposDeDespesaMaisComunsReais <- group_by(ceap, tipoDespesa) %>%
+                                summarise(totalReais = sum(valorDocumento))
+
+
+```
+
+### 3.1 Quais os estados que mais fazem uso da CEAP?
+
+```{r, echo=TRUE}
+estadosMaisUsamCEAP <- group_by(ceap, sgUF) %>%
+                        summarise(total = n())
+```
+
+### 3.2 Quais os estados que mais fazem uso da CEAP considerando os valores em R$?
+
+```{r, echo=TRUE}
+estadosMaisUsamCEAPreais <- group_by(ceap, sgUF) %>%
+                            summarise(totalReais = sum(valorDocumento))
+```
+
+### 4 Quais os parlamentares que mais gastam com o CEAP?
+
+```{r, echo=TRUE}
+parlamentaresMaisUsamCEAP <- group_by(ceap, nomeParlamentar) %>%
+                              filter(valorDocumento > -1) %>%
+                              summarise(totalUsos = sum(valorDocumento))
+```
+
+### Há correlação entre a quantidade de gastos no exterior e o valor restituído da CEAP?
+
+
