@@ -9,6 +9,7 @@ output: html_document
 library(dplyr)
 library(ggplot2)
 library(plotly)
+library(RColorBrewer)
 ceap <- read.csv(file="dadosCEAP.csv", header=TRUE, sep=",") %>% filter(sgPartido != "NA")
 ```
 
@@ -33,7 +34,6 @@ partidosQueMaisUsamCEAP %>% plot_ly(x=~reorder(sgPartido, totalUsos),
                                                 range = c(0, 14),
                                                 tickformat=".2f"))
 
-partidosQueMaisUsamCEAP
 ```
 
 ### 1.2 Quais os partidos que mais gastam verba do CEAP?
@@ -61,18 +61,33 @@ valorGastoReaisPorPartido %>% plot_ly(x=~reorder(sgPartido, totalReais),
 tiposDeDespesaMaisComuns <- group_by(ceap, tipoDespesa) %>%
                             summarise(total = n())
 
+m <- list(
+  l = 50,
+  r = 50,
+  b = 100,
+  t = 100,
+  pad = 4
+)
+
+cores <- colorRampPalette(c("royalblue3", "red3"))
+
 tiposDeDespesaMaisComuns %>% plot_ly(x=~tipoDespesa,
                                      y=~total,
                                      type="scatter",
                                      mode = "markers",
-                                     color = ~tipoDespesa,
-                                     colors = "Reds",
-                                     marker = list(size = ~total / 1000, opacity = 0.5,
-                                                   sizeref = 0.1)) %>%
+                                     #color = ~tipoDespesa,
+                                     #colors = cores,
+                                     sizes = c(10, 50),
+                                     marker = list(size = ~total / 4000, opacity = 1.0)) %>%
               
                                      layout(title="Gastor por tipo de despesa",
-                                            xaxis = list(showgrid = FALSE, ticklen = 2),
-                                            yaxis = list(showgrid = FALSE, ticklen = 2))
+                                            #autosize = F,
+                                            #width = 700,
+                                            #height = 700,
+                                            #margin = m,
+                                            xaxis = list(showgrid = FALSE),
+                                            yaxis = list(showgrid = FALSE),
+                                            showlegend = FALSE)
 
 tiposDeDespesaMaisComuns
 ```
